@@ -1,0 +1,144 @@
+ CREATE TABLE employee (
+  emp_id INT NOT NULL,
+  first_name VARCHAR(40) DEFAULT NULL,
+  last_name VARCHAR(40) DEFAULT NULL,
+  birth_day DATE DEFAULT NULL,
+  sex VARCHAR(1) DEFAULT NULL,
+  salary INT DEFAULT NULL,
+  super_id INT DEFAULT NULL,
+  branch_id INT DEFAULT NULL,
+  PRIMARY KEY (emp_id),
+  KEY branch_id (branch_id),
+  KEY super_id (super_id),
+  CONSTRAINT employee_ibfk_1 FOREIGN KEY (branch_id) REFERENCES branch (branch_id) ON DELETE SET NULL,
+  CONSTRAINT employee_ibfk_2 FOREIGN KEY (`super_id`) REFERENCES employee (`emp_id`) ON DELETE SET NULL
+CREATE TABLE Product (
+  id INT NOT NULL,
+  name VARCHAR(255) DEFAULT NULL,
+  `category` enum('electronics','clothing','home_goods') DEFAULT NULL,
+  PRIMARY KEY (`id`)
+)
+DELETE FROM branch
+WHERE branch_id = 4;
+
+
+CREATE TABLE `branch_supplier` (
+  `branch_id` INT NOT NULL,
+  `supplier_name` VARCHAR(40) NOT NULL,
+  `supply_type` VARCHAR(40) DEFAULT NULL,
+  PRIMARY KEY (`branch_id`,`supplier_name`),
+  CONSTRAINT `branch_supplier_ibfk_1` FOREIGN KEY (`branch_id`) REFERENCES `branch` (`branch_id`) ON DELETE CASCADE
+)
+
+
+CREATE TABLE `branch` (
+  `branch_id` INT NOT NULL,
+  `branch_name` VARCHAR(40) DEFAULT NULL,
+  `mgr_id` INT DEFAULT NULL,
+  `mgr_start_DATE` DATE DEFAULT NULL,
+  PRIMARY KEY (`branch_id`),
+  KEY `mgr_id` (`mgr_id`),
+  CONSTRAINT `branch_ibfk_1` FOREIGN KEY (`mgr_id`) REFERENCES `employee` (`emp_id`) ON DELETE SET NULL
+)
+
+
+CREATE TABLE `client` (
+  `client_id` INT NOT NULL,
+  `client_name` VARCHAR(40) DEFAULT NULL,
+  `branch_id` INT DEFAULT NULL,
+  PRIMARY KEY (`client_id`),
+  KEY `branch_id` (`branch_id`),
+  CONSTRAINT `client_ibfk_1` FOREIGN KEY (`branch_id`) REFERENCES `branch` (`branch_id`) ON DELETE SET NULL
+) 
+
+
+CREATE TABLE `works_with` (
+  `emp_id` INT NOT NULL,
+  `client_id` INT NOT NULL,
+  `total_sales` INT DEFAULT NULL,
+  PRIMARY KEY (`emp_id`,`client_id`),
+  KEY `client_id` (`client_id`),
+  CONSTRAINT `works_with_ibfk_1` FOREIGN KEY (`emp_id`) REFERENCES `employee` (`emp_id`) ON DELETE CASCADE,
+  CONSTRAINT `works_with_ibfk_2` FOREIGN KEY (`client_id`) REFERENCES `client` (`client_id`) ON DELETE CASCADE
+)
+
+
+trigger_test | CREATE TABLE `trigger_test` (
+  `message` VARCHAR(100) DEFAULT NULL
+) 
+SELECT *
+FROM employee
+LEFT OUTER JOIN works_with
+   ON employee.emp_id = works_with.emp_id;
+
+
+SELECT * 
+FROM employee
+JOIN works_with
+   ON employee.emp_id = works_with.emp_id;
+
+SELECT employee.emp_id, first_name, last_name, branch_id, client_id, total_sales
+FROM employee
+JOIN works_with
+    ON employee.emp_id = works_with.emp_id;
+
+FROM employee
+LEFT OUTER JOIN works_with
+    ON employee.emp_id = works_with.emp_id;
+SELECT employee.emp_id, first_name, last_name, branch_id, client_id, total_sales
+FROM employee
+RIGHT OUTER JOIN works_with
+    ON employee.emp_id = works_with.emp_id;
+SELECT employee.emp_id, first_name, last_name, branch_id, salary, client_id, total_sales
+FROM employee
+JOIN works_with
+   ON employee.emp_id = works_with.emp_id
+WHERE first_name <> 'Michael'AND branch_id = 2
+ORDER BY salary DESC;
+
+SELECT * FROM branch;
+SELECT * FROM employee
+UNION
+SELECT * FROM works_with;
+SELECT client_id, client_name, branch_id
+FROM client
+UNION
+SELECT client_id, emp_id, total_sales
+FROM works_with;
+ -- Case Statement
+SELECT first_name, last_name, birth_day,
+CASE
+   
+    WHEN birth_day BETWEEN 1/1/1957 AND 1/1/1969 THEN 'Retired'
+    ELSE 'Old'
+END 
+FROM employee
+ORDER BY birth_day;
+-- REVISIT. Use branch table.
+
+SELECT first_name, last_name, salary,
+CASE  
+    WHEN branch_id = 2 THEN salary + (salary * .10)
+    WHEN branch_id = 1 THEN salary + (salary * .01)
+    ELSE salary + (salary * .03)
+END AS SalaryAfterRaise
+FROM employee;
+UPDATE branch
+SET mgr_id = 101
+WHERE branch_id = 4;
+DELETE FROM branch
+WHERE branch_id = 4;
+
+
+-- Partition By
+SELECT first_name, last_name, salary, sex,COUNT(sex) OVER (PARTITION BY sex) AS TotalGender
+FROM employee
+JOIN works_with
+   ON employee.emp_id = works_with.emp_id;
+   
+   
+-- Aliasing
+SELECT Demo.emp_id, Sales.total_sales
+FROM employee AS Demo
+JOIN works_with AS Sales
+   ON Demo.emp_id = Sales.emp_id;
