@@ -142,3 +142,19 @@ SELECT Demo.emp_id, Sales.total_sales
 FROM employee AS Demo
 JOIN works_with AS Sales
    ON Demo.emp_id = Sales.emp_id;
+
+
+-- EVENTS
+DELIMITER $$
+CREATE EVENT delete_retirees
+ON SCHEDULE EVERY 100 SECOND
+DO
+BEGIN 
+   DELETE 
+   FROM employee
+   WHERE birth_day > 01/01/1970;
+END $$
+DELIMITER ;
+
+-- Troubleshoot Event Failure
+SHOW VARIABLES LIKE 'event%';
