@@ -158,3 +158,105 @@ DELIMITER ;
 
 -- Troubleshoot Event Failure
 SHOW VARIABLES LIKE 'event%';
+
+
+-- CTE's in MySQL
+-- Temporary, can only be used when first created
+
+WITH CTE_Example AS
+(
+SELECT sex, AVG(salary) avg_sal, MAX(salary) max_sal, MIN(salary) min_sal, COUNT(salary) count_sal, AVG(total_sales) avg_sales
+FROM employee
+JOIN works_with
+    ON employee.emp_id = works_with.emp_id
+GROUP BY sex
+)
+SELECT *
+FROM CTE_Example;
+-- Alternative using a Subquery
+SELECT *
+FROM (
+SELECT sex, AVG(salary) avg_sal, MAX(salary) max_sal, MIN(salary) min_sal, COUNT(salary) count_sal, AVG(total_sales) avg_sales
+FROM employee
+JOIN works_with
+    ON employee.emp_id = works_with.emp_id
+GROUP BY sex
+) example_subquery
+;
+-- Multiple CTE's
+
+WITH CTE_Example AS 
+(
+SELECT emp_id, sex, birth_day, salary
+FROM employee
+WHERE birth_day < DATE '1970-01-01'
+),
+CTE_Example2 AS
+(
+SELECT emp_id, total_sales
+FROM works_with
+WHERE total_sales > 10000
+)
+SELECT *
+FROM CTE_Example
+JOIN CTE_Example2
+   ON CTE_Example.emp_id = CTE_Example2.emp_id
+;
+
+-- Temporary Tables
+-- Only visible to the session they are created in 
+
+CREATE TEMPORARY TABLE temp_table
+(
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    fave_movie VARCHAR(100)
+);
+SELECT *
+FROM temp_table;
+INSERT INTO temp_table
+VALUES('Dan', 'Muiru', 'Old Guard' );
+
+CREATE TEMPORARY TABLE salary_over_70k
+SELECT *
+FROM employee
+WHERE salary >= 70000;
+SELECT *
+FROM salary_over_70k;
+-- Stored Procedures
+
+CREATE PROCEDURE large_salaries()
+SELECT *
+FROM employee
+WHERE salary >= 70000;
+CALL large_salaries();
+USE testdb;
+DROP PROCEDURE IF EXISTS `large_salaries`;
+
+DELIMITER $$
+USE testdb $$
+CREATE PROCEDURE `large_salaries`()
+BEGIN
+   SELECT *
+   FROM employee
+   WHERE salary >= 70000;
+   SELECT *
+   FROM employee
+   WHERE salary <= 60000;
+END $$
+
+DELIMITER ;
+CALL large_salaries();
+-- Parameters in Procedures
+-- Variables passed as input to stored procedures
+
+DELIMITER $$
+CREATE PROCEDURE large_sales(emp_id_param INT)
+BEGIN 
+    SELECT total_sales
+    FROM works_with
+    WHERE emp_id = emp_id_param;
+END $$
+DELIMITER ;
+
+CALL large_sales(102);
